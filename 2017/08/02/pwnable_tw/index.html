@@ -94,13 +94,21 @@
 
 
 
-<meta property="og:type" content="website">
-<meta property="og:title" content="YEL&#39;s BLOG">
-<meta property="og:url" content="http://yoursite.com/index.html">
+<meta name="description" content="hacknote0x01这个题目做了好久，期间学习了malloc、chunk、free的知识。 这题是一个UAF漏洞，关键有三个：  怎么利用野指针  怎么leak  怎么在system的参数不是‘/bin/sh’时利用漏洞   0x02刚开始学了doublefree，就在想能不能用doublefree，但是问题在于就算获得了一个任意写的指针，由于程序的限制（chunk只能在创建时，写入数据，且c">
+<meta property="og:type" content="article">
+<meta property="og:title" content="pwnable.tw">
+<meta property="og:url" content="http://yoursite.com/2017/08/02/pwnable_tw/index.html">
 <meta property="og:site_name" content="YEL&#39;s BLOG">
+<meta property="og:description" content="hacknote0x01这个题目做了好久，期间学习了malloc、chunk、free的知识。 这题是一个UAF漏洞，关键有三个：  怎么利用野指针  怎么leak  怎么在system的参数不是‘/bin/sh’时利用漏洞   0x02刚开始学了doublefree，就在想能不能用doublefree，但是问题在于就算获得了一个任意写的指针，由于程序的限制（chunk只能在创建时，写入数据，且c">
 <meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://yoursite.com/images/hacknote_1.png">
+<meta property="og:image" content="http://yoursite.com/images/hacknote_2.png">
+<meta property="og:image" content="http://yoursite.com/images/applestore.png">
+<meta property="og:updated_time" content="2017-08-02T15:38:22.302Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="YEL&#39;s BLOG">
+<meta name="twitter:title" content="pwnable.tw">
+<meta name="twitter:description" content="hacknote0x01这个题目做了好久，期间学习了malloc、chunk、free的知识。 这题是一个UAF漏洞，关键有三个：  怎么利用野指针  怎么leak  怎么在system的参数不是‘/bin/sh’时利用漏洞   0x02刚开始学了doublefree，就在想能不能用doublefree，但是问题在于就算获得了一个任意写的指针，由于程序的限制（chunk只能在创建时，写入数据，且c">
+<meta name="twitter:image" content="http://yoursite.com/images/hacknote_1.png">
 
 
 
@@ -129,13 +137,13 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/"/>
+  <link rel="canonical" href="http://yoursite.com/2017/08/02/pwnable_tw/"/>
 
 
 
 
 
-  <title>YEL's BLOG</title>
+  <title>pwnable.tw | YEL's BLOG</title>
   
 
 
@@ -160,9 +168,7 @@
     
   
 
-  <div class="container sidebar-position-right 
-   page-home 
- ">
+  <div class="container sidebar-position-right page-post-detail ">
     <div class="headband"></div>
 
     <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
@@ -265,9 +271,9 @@
         <div class="content-wrap">
           <div id="content" class="content">
             
-  <section id="posts" class="posts-expand">
+
+  <div id="posts" class="posts-expand">
     
-      
 
   
 
@@ -297,9 +303,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2017/08/02/pwnable_tw/" itemprop="url">pwnable.tw</a></h1>
+          <h1 class="post-title" itemprop="name headline">pwnable.tw</h1>
         
 
         <div class="post-meta">
@@ -349,9 +353,7 @@
       
 
       
-        
-          
-            <h2 id="hacknote"><a href="#hacknote" class="headerlink" title="hacknote"></a>hacknote</h2><h3 id="0x01"><a href="#0x01" class="headerlink" title="0x01"></a>0x01</h3><p>这个题目做了好久，期间学习了malloc、chunk、free的知识。</p>
+        <h2 id="hacknote"><a href="#hacknote" class="headerlink" title="hacknote"></a>hacknote</h2><h3 id="0x01"><a href="#0x01" class="headerlink" title="0x01"></a>0x01</h3><p>这个题目做了好久，期间学习了malloc、chunk、free的知识。</p>
 <p>这题是一个UAF漏洞，关键有三个：</p>
 <ol>
 <li><p>怎么利用野指针</p>
@@ -383,8 +385,6 @@
 <h3 id="0x03"><a href="#0x03" class="headerlink" title="0x03"></a>0x03</h3><p>leak出地址后，把之前学的方法都想了一遍试了一遍，感觉无法exploit，想要写入的地址都是不可写的，看了别<br>人的writeup后，发现改变ebp这种操作都可以的。说了这么多，任意地址可写的漏洞在哪呢？这里我们就应该对<br>双链表的删除节点操作有比较好的敏感性（之前看的double free），由于栈上面的item是任意可写的，我们利用<br>这个双链表的删除过程，将需要写入的地址放到，该item的前向后向指针上，这样delete node时就可以将两个地址<br>互相写入一个地址，所以这里要求两个地址都是可写的。</p>
 <h3 id="0x04"><a href="#0x04" class="headerlink" title="0x04"></a>0x04</h3><p>这题的精彩之处在于，可以将栈里面的ebp覆盖，函数返回后就可以覆盖寄存器ebp，然后将栈的位置移动，栈上<br>变量地址改变，从而在想要写入的地址写入需要的内容，比如在GOT.atoi上写入system的地址。另外就是之前一题的<br>命令行截断使用’;’，所以最后call的是system(‘??;sh’)。</p>
 
-          
-        
       
     </div>
     
@@ -401,12 +401,12 @@
       
 
       
+      
+      
 
       
 
       
-      
-        <div class="post-eof"></div>
       
     </footer>
   </div>
@@ -416,10 +416,11 @@
   </article>
 
 
-    
-  </section>
 
-  
+    <div class="post-spread">
+      
+    </div>
+  </div>
 
 
           </div>
@@ -427,6 +428,10 @@
 
 
           
+  <div class="comments" id="comments">
+    
+  </div>
+
 
         </div>
         
@@ -447,8 +452,17 @@
       
 
       
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
 
-      <section class="site-overview sidebar-panel sidebar-panel-active">
+      <section class="site-overview sidebar-panel">
         <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
           <img class="site-author-image" itemprop="image"
                src="/images/avatar.gif"
@@ -492,6 +506,22 @@
 
       </section>
 
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#hacknote"><span class="nav-number">1.</span> <span class="nav-text">hacknote</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#0x01"><span class="nav-number">1.1.</span> <span class="nav-text">0x01</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#0x02"><span class="nav-number">1.2.</span> <span class="nav-text">0x02</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#0x03-leak"><span class="nav-number">1.3.</span> <span class="nav-text">0x03 leak</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#0x04-setchunk"><span class="nav-number">1.4.</span> <span class="nav-text">0x04 setchunk</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#applestore"><span class="nav-number">2.</span> <span class="nav-text">applestore</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#0x01-1"><span class="nav-number">2.1.</span> <span class="nav-text">0x01</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#0x02-1"><span class="nav-number">2.2.</span> <span class="nav-text">0x02</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#0x03"><span class="nav-number">2.3.</span> <span class="nav-text">0x03</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#0x04"><span class="nav-number">2.4.</span> <span class="nav-text">0x04</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
       
 
       
@@ -605,10 +635,10 @@
   
 
   
-    <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.2"></script>
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.2"></script>
 <script type="text/javascript" src="/js/src/post-details.js?v=5.1.2"></script>
 
-  
+
 
   
 
