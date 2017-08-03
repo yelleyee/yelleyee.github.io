@@ -94,20 +94,20 @@
 
 
 
-<meta name="description" content="hacknote0x01这个题目做了好久，期间学习了malloc、chunk、free的知识。 这题是一个UAF漏洞，关键有三个：  怎么利用野指针  怎么leak  怎么在system的参数不是‘/bin/sh’时利用漏洞   0x02刚开始学了doublefree，就在想能不能用doublefree，但是问题在于就算获得了一个任意写的指针，由于程序的限制（chunk只能在创建时，写入数据，且c">
+<meta name="description" content="hacknote0x01这个题目做了好久，期间学习了malloc、chunk、free的知识。 这题是一个UAF漏洞，关键有三个：  怎么利用野指针  怎么leak  怎么在system的参数不是’/bin/sh’时利用漏洞   0x02刚开始学了doublefree，就在想能不能用doublefree， 但是问题在于就算获得了一个任意写的指针，由于程序的限制 （chunk只能在创建时，写入数据，">
 <meta property="og:type" content="article">
-<meta property="og:title" content="pwnable.tw">
+<meta property="og:title" content="pwnable_tw(0)">
 <meta property="og:url" content="http://yoursite.com/2017/08/02/pwnable_tw/index.html">
 <meta property="og:site_name" content="YEL&#39;s BLOG">
-<meta property="og:description" content="hacknote0x01这个题目做了好久，期间学习了malloc、chunk、free的知识。 这题是一个UAF漏洞，关键有三个：  怎么利用野指针  怎么leak  怎么在system的参数不是‘/bin/sh’时利用漏洞   0x02刚开始学了doublefree，就在想能不能用doublefree，但是问题在于就算获得了一个任意写的指针，由于程序的限制（chunk只能在创建时，写入数据，且c">
+<meta property="og:description" content="hacknote0x01这个题目做了好久，期间学习了malloc、chunk、free的知识。 这题是一个UAF漏洞，关键有三个：  怎么利用野指针  怎么leak  怎么在system的参数不是’/bin/sh’时利用漏洞   0x02刚开始学了doublefree，就在想能不能用doublefree， 但是问题在于就算获得了一个任意写的指针，由于程序的限制 （chunk只能在创建时，写入数据，">
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://yoursite.com/images/hacknote_1.png">
 <meta property="og:image" content="http://yoursite.com/images/hacknote_2.png">
 <meta property="og:image" content="http://yoursite.com/images/applestore.png">
-<meta property="og:updated_time" content="2017-08-02T15:38:22.302Z">
+<meta property="og:updated_time" content="2017-08-03T12:06:28.023Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="pwnable.tw">
-<meta name="twitter:description" content="hacknote0x01这个题目做了好久，期间学习了malloc、chunk、free的知识。 这题是一个UAF漏洞，关键有三个：  怎么利用野指针  怎么leak  怎么在system的参数不是‘/bin/sh’时利用漏洞   0x02刚开始学了doublefree，就在想能不能用doublefree，但是问题在于就算获得了一个任意写的指针，由于程序的限制（chunk只能在创建时，写入数据，且c">
+<meta name="twitter:title" content="pwnable_tw(0)">
+<meta name="twitter:description" content="hacknote0x01这个题目做了好久，期间学习了malloc、chunk、free的知识。 这题是一个UAF漏洞，关键有三个：  怎么利用野指针  怎么leak  怎么在system的参数不是’/bin/sh’时利用漏洞   0x02刚开始学了doublefree，就在想能不能用doublefree， 但是问题在于就算获得了一个任意写的指针，由于程序的限制 （chunk只能在创建时，写入数据，">
 <meta name="twitter:image" content="http://yoursite.com/images/hacknote_1.png">
 
 
@@ -143,7 +143,7 @@
 
 
 
-  <title>pwnable.tw | YEL's BLOG</title>
+  <title>pwnable_tw(0) | YEL's BLOG</title>
   
 
 
@@ -303,7 +303,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">pwnable.tw</h1>
+          <h1 class="post-title" itemprop="name headline">pwnable_tw(0)</h1>
         
 
         <div class="post-meta">
@@ -353,37 +353,37 @@
       
 
       
-        <h2 id="hacknote"><a href="#hacknote" class="headerlink" title="hacknote"></a>hacknote</h2><h3 id="0x01"><a href="#0x01" class="headerlink" title="0x01"></a>0x01</h3><p>这个题目做了好久，期间学习了malloc、chunk、free的知识。</p>
+        <h1 id="hacknote"><a href="#hacknote" class="headerlink" title="hacknote"></a>hacknote</h1><h2 id="0x01"><a href="#0x01" class="headerlink" title="0x01"></a>0x01</h2><p>这个题目做了好久，期间学习了malloc、chunk、free的知识。</p>
 <p>这题是一个UAF漏洞，关键有三个：</p>
 <ol>
 <li><p>怎么利用野指针</p>
 </li>
 <li><p>怎么leak</p>
 </li>
-<li><p>怎么在system的参数不是‘/bin/sh’时利用漏洞</p>
+<li><p>怎么在system的参数不是’/bin/sh’时利用漏洞</p>
 </li>
 </ol>
-<h3 id="0x02"><a href="#0x02" class="headerlink" title="0x02"></a>0x02</h3><p>刚开始学了doublefree，就在想能不能用doublefree，<br>但是问题在于就算获得了一个任意写的指针，由于程序的限制<br>（chunk只能在创建时，写入数据，且chunk创建数量有限），<br>导致我们无法向任意可写的指针中修改数据。那么doublefree的使用是不成功的</p>
-<h3 id="0x03-leak"><a href="#0x03-leak" class="headerlink" title="0x03 leak"></a>0x03 leak</h3><pre><code>a. add_note(16);add_note(16)           #index 0 , 1
-</code></pre><p><img src="/images/hacknote_1.png" alt="mem after malloc"></p>
-<pre><code>b. del_note(0);del_note(1)
-</code></pre><p>由于chunk块都小于64B，所以free后链接到fast bins</p>
+<h2 id="0x02"><a href="#0x02" class="headerlink" title="0x02"></a>0x02</h2><p>刚开始学了doublefree，就在想能不能用doublefree， 但是问题在于就算获得了一个任意写的指针，由于程序的限制 （chunk只能在创建时，写入数据，且chunk创建数量有限）， 导致我们无法向任意可写的指针中修改数据。那么doublefree的使用是不成功的</p>
+<h2 id="0x03-leak"><a href="#0x03-leak" class="headerlink" title="0x03 leak"></a>0x03 leak</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">a. add_note(16);add_note(16)           #index 0 , 1</div></pre></td></tr></table></figure>
+<p><img src="/images/hacknote_1.png" alt="mem after malloc"></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">b. del_note(0);del_note(1)</div></pre></td></tr></table></figure>
+<p>由于chunk块都小于64B，所以free后链接到fast bins</p>
 <p><img src="/images/hacknote_2.png" alt="mem after free"></p>
-<pre><code>c. add_note(8) = malloc(8)-&gt;#2ptr + malloc(8)-&gt;#content   ####index 2####
-</code></pre><p>由于malloc的chunk大小为2B&lt;64B所以先到fast bins 找空闲的chunk，<br>  显然刚好有两个，那么先使用chunk0，再使用chunk2，<br>而chunk2就是index1的2ptr_chunk，当我们向其中写入print_ptr、read_got_addr,<br>  然后使用print_note(1)就可以泄漏read的地址了。</p>
-<h3 id="0x04-setchunk"><a href="#0x04-setchunk" class="headerlink" title="0x04 setchunk"></a>0x04 setchunk</h3><p>继续使用这个野指针</p>
-<pre><code>a. del_note(2); add_note(8) #index 3#
-</code></pre><p>content=system_addr+”;sh;”</p>
-<p>由于下一步print使用的函数是 (*system_addr)(system_addr) 传入的参数是system_addr 而不是’/bin/sh’<br>所以我们要用’;’截断前一个命令,然后顺利执行到’sh’</p>
-<pre><code>b. print_note(3)  ##system(&apos;????;sh;&apos;)
-</code></pre><h2 id="applestore"><a href="#applestore" class="headerlink" title="applestore"></a>applestore</h2><h3 id="0x01-1"><a href="#0x01-1" class="headerlink" title="0x01"></a>0x01</h3><p>这个题目前面做的都很顺利，地址泄露，以及写地址漏洞都找到了，然而找到的写地址漏洞要求被写入的地址处的内存也是可写的，这样就很难把system的地址写到指定GOT，然后使用ret2lib，这个想法破灭后，我想了另一个办法：在栈上面构造rop链，先return到read，然后通过read向栈写入任意内容，但是又失败了，因为return到plt.read才是可以执行的指令，而return到got.read是不可行的，因为got中只是存储read的地址，而地址不能作为指令执行，plt又是不可写的，所以就很难完成。无奈又求助谷歌，找到了一片文章：<a href="http://mutepig.club/index.php/archives/21/" target="_blank" rel="external">applestore_writeup</a>。<br>发现一种厉害的操作，就是通过修改存储在栈中的ebp，使得栈返回上层函数后，将栈底返回给ebp寄存器，这样就使得栈的位置发生改变了，同样栈上局部变量的地址也发生了改变，这样我们使栈的地址改变到got上，然后向变量写东西就可以改变GOT的内容。但是最好在修改时修改下一个要执行的lib函数的GOT地址，如果修改后中间有很多其他函数执行，会导致GOT的混乱（因为栈在这里），出现错误，程序提前退出。</p>
-<h3 id="0x02-1"><a href="#0x02-1" class="headerlink" title="0x02"></a>0x02</h3><p>了解程序的功能后，发现了一个很有趣的地方：在checkout()中，有一个总价刚好为7174元就可以加一元换购iphone8的活动，那么我们就凑单凑到7174：16台199、10台399，刚好7174（解方程想了一会。。。），那么就可以换购了，美滋滋~。~然而，却发现了一个惊天大秘密，那就是这块程序把栈中的数据当作堆链入了链表。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">c. add_note(8) = malloc(8)-&gt;#2ptr + malloc(8)-&gt;#content   ####index 2####</div></pre></td></tr></table></figure>
+<p>由于malloc的chunk大小为2B&lt;64B所以先到fast bins 找空闲的chunk， 显然刚好有两个，那么先使用chunk0，再使用chunk2， 而chunk2就是index1的2ptr_chunk，当我们向其中写入print_ptr、read_got_addr, 然后使用print_note(1)就可以泄漏read的地址了。</p>
+<h2 id="0x04-setchunk"><a href="#0x04-setchunk" class="headerlink" title="0x04 setchunk"></a>0x04 setchunk</h2><p>继续使用这个野指针</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">a. del_note(2); add_note(8) #index 3#</div></pre></td></tr></table></figure>
+<p>content=system_addr+”;sh;”</p>
+<p>由于下一步print使用的函数是 (*system_addr)(system_addr) 传入的参数是system_addr 而不是’/bin/sh’ 所以我们要用’;’截断前一个命令,然后顺利执行到’sh’</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">b. print_note(3)  ##system(&apos;????;sh;&apos;)</div></pre></td></tr></table></figure>
+<h1 id="applestore"><a href="#applestore" class="headerlink" title="applestore"></a>applestore</h1><h2 id="0x01-1"><a href="#0x01-1" class="headerlink" title="0x01"></a>0x01</h2><p>这个题目前面做的都很顺利，地址泄露，以及写地址漏洞都找到了，然而找到的写地址漏洞要求被写入的地址处的内存也是可写的，这样就很难把system的地址写到指定GOT，然后使用ret2lib，这个想法破灭后，我想了另一个办法：在栈上面构造rop链，先return到read，然后通过read向栈写入任意内容，但是又失败了，因为return到plt.read才是可以执行的指令，而return到got.read是不可行的，因为got中只是存储read的地址，而地址不能作为指令执行，plt又是不可写的，所以就很难完成。无奈又求助谷歌，找到了一片文章：<a href="http://mutepig.club/index.php/archives/21/" target="_blank" rel="external">applestore_writeup</a>。 发现一种厉害的操作，就是通过修改存储在栈中的ebp，使得栈返回上层函数后，将栈底返回给ebp寄存器，这样就使得栈的位置发生改变了，同样栈上局部变量的地址也发生了改变，这样我们使栈的地址改变到got上，然后向变量写东西就可以改变GOT的内容。但是最好在修改时修改下一个要执行的lib函数的GOT地址，如果修改后中间有很多其他函数执行，会导致GOT的混乱（因为栈在这里），出现错误，程序提前退出。</p>
+<h2 id="0x02-1"><a href="#0x02-1" class="headerlink" title="0x02"></a>0x02</h2><p>了解程序的功能后，发现了一个很有趣的地方：在checkout()中，有一个总价刚好为7174元就可以加一元换购iphone8的活动，那么我们就凑单凑到7174：16台199、10台399，刚好7174（解方程想了一会。。。），那么就可以换购了，美滋滋~。~然而，却发现了一个惊天大秘密，那就是这块程序把栈中的数据当作堆链入了链表。</p>
 <p>程序使用双链表储存购物清单：</p>
 <p><img src="/images/applestore.png" alt="链表结构"></p>
 <p>pre_ptr就是指向前一个节点的地址。</p>
-<p>然后我就想着leak地址，这时就发现，打印账单时，会printf(‘%s….’,ptr2str,…)，而最后一个ptr2str27<br>在栈上，我们可以考虑取覆盖这个位置的指针值，恰好打印账单有一个确认的过程，这里就可以覆盖ptr2str27<br>处，将这个位置覆盖成got.read的地址，这样就可以读出read的地址了，从而泄漏libc的基址。两种想法失败<br>后，看到那个writeup我脑袋就点通了一下，我还想搞的是leak栈地址，但是我们next_ptr26在malloc的的chunk<br>里面，要从第一个慢慢读下去感觉很麻烦（其实也ok啦，只是刚开始没想到&lt;..&gt;），所以我的想法是delete商品，<br>从把26-1都给delete掉，然后就只剩一个0和27了，这样&amp;myCart+8 里面存的就是item27的地址，也就是我们需要<br>需要leak的栈地址。</p>
-<h3 id="0x03"><a href="#0x03" class="headerlink" title="0x03"></a>0x03</h3><p>leak出地址后，把之前学的方法都想了一遍试了一遍，感觉无法exploit，想要写入的地址都是不可写的，看了别<br>人的writeup后，发现改变ebp这种操作都可以的。说了这么多，任意地址可写的漏洞在哪呢？这里我们就应该对<br>双链表的删除节点操作有比较好的敏感性（之前看的double free），由于栈上面的item是任意可写的，我们利用<br>这个双链表的删除过程，将需要写入的地址放到，该item的前向后向指针上，这样delete node时就可以将两个地址<br>互相写入一个地址，所以这里要求两个地址都是可写的。</p>
-<h3 id="0x04"><a href="#0x04" class="headerlink" title="0x04"></a>0x04</h3><p>这题的精彩之处在于，可以将栈里面的ebp覆盖，函数返回后就可以覆盖寄存器ebp，然后将栈的位置移动，栈上<br>变量地址改变，从而在想要写入的地址写入需要的内容，比如在GOT.atoi上写入system的地址。另外就是之前一题的<br>命令行截断使用’;’，所以最后call的是system(‘??;sh’)。</p>
+<p>然后我就想着leak地址，这时就发现，打印账单时，会printf(‘%s….’,ptr2str,…)，而最后一个ptr2str27 在栈上，我们可以考虑取覆盖这个位置的指针值，恰好打印账单有一个确认的过程，这里就可以覆盖ptr2str27 处，将这个位置覆盖成got.read的地址，这样就可以读出read的地址了，从而泄漏libc的基址。两种想法失败 后，看到那个writeup我脑袋就点通了一下，我还想搞的是leak栈地址，但是我们next_ptr26在malloc的的chunk 里面，要从第一个慢慢读下去感觉很麻烦（其实也ok啦，只是刚开始没想到&lt;..&gt;），所以我的想法是delete商品， 从把26-1都给delete掉，然后就只剩一个0和27了，这样&amp;myCart+8 里面存的就是item27的地址，也就是我们需要 需要leak的栈地址。</p>
+<h2 id="0x03"><a href="#0x03" class="headerlink" title="0x03"></a>0x03</h2><p>leak出地址后，把之前学的方法都想了一遍试了一遍，感觉无法exploit，想要写入的地址都是不可写的，看了别 人的writeup后，发现改变ebp这种操作都可以的。说了这么多，任意地址可写的漏洞在哪呢？这里我们就应该对 双链表的删除节点操作有比较好的敏感性（之前看的double free），由于栈上面的item是任意可写的，我们利用 这个双链表的删除过程，将需要写入的地址放到，该item的前向后向指针上，这样delete node时就可以将两个地址 互相写入一个地址，所以这里要求两个地址都是可写的。</p>
+<h2 id="0x04"><a href="#0x04" class="headerlink" title="0x04"></a>0x04</h2><p>这题的精彩之处在于，可以将栈里面的ebp覆盖，函数返回后就可以覆盖寄存器ebp，然后将栈的位置移动，栈上 变量地址改变，从而在想要写入的地址写入需要的内容，比如在GOT.atoi上写入system的地址。另外就是之前一题的 命令行截断使用’;’，所以最后call的是system(‘??;sh’)。</p>
 
       
     </div>
@@ -404,6 +404,22 @@
       
       
 
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/08/03/pwnable-kr-0/" rel="prev" title="pwnable_kr_0">
+                pwnable_kr_0 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
       
 
       
@@ -477,7 +493,7 @@
           
             <div class="site-state-item site-state-posts">
               <a href="/archives/">
-                <span class="site-state-item-count">1</span>
+                <span class="site-state-item-count">2</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -516,7 +532,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#hacknote"><span class="nav-number">1.</span> <span class="nav-text">hacknote</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#0x01"><span class="nav-number">1.1.</span> <span class="nav-text">0x01</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#0x02"><span class="nav-number">1.2.</span> <span class="nav-text">0x02</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#0x03-leak"><span class="nav-number">1.3.</span> <span class="nav-text">0x03 leak</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#0x04-setchunk"><span class="nav-number">1.4.</span> <span class="nav-text">0x04 setchunk</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#applestore"><span class="nav-number">2.</span> <span class="nav-text">applestore</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#0x01-1"><span class="nav-number">2.1.</span> <span class="nav-text">0x01</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#0x02-1"><span class="nav-number">2.2.</span> <span class="nav-text">0x02</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#0x03"><span class="nav-number">2.3.</span> <span class="nav-text">0x03</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#0x04"><span class="nav-number">2.4.</span> <span class="nav-text">0x04</span></a></li></ol></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#hacknote"><span class="nav-number">1.</span> <span class="nav-text">hacknote</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#0x01"><span class="nav-number">1.1.</span> <span class="nav-text">0x01</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#0x02"><span class="nav-number">1.2.</span> <span class="nav-text">0x02</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#0x03-leak"><span class="nav-number">1.3.</span> <span class="nav-text">0x03 leak</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#0x04-setchunk"><span class="nav-number">1.4.</span> <span class="nav-text">0x04 setchunk</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#applestore"><span class="nav-number">2.</span> <span class="nav-text">applestore</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#0x01-1"><span class="nav-number">2.1.</span> <span class="nav-text">0x01</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#0x02-1"><span class="nav-number">2.2.</span> <span class="nav-text">0x02</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#0x03"><span class="nav-number">2.3.</span> <span class="nav-text">0x03</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#0x04"><span class="nav-number">2.4.</span> <span class="nav-text">0x04</span></a></li></ol></li></ol></div>
             
 
           </div>
