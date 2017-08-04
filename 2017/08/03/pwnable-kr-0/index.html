@@ -102,7 +102,7 @@
 <meta property="og:description" content="unlink12345678910111213141516171819202122232425262728293031323334353637383940414243#include &amp;lt;stdio.h&amp;gt;#include &amp;lt;stdlib.h&amp;gt;#include &amp;lt;string.h&amp;gt;typedef struct tagOBJ&amp;#123;	struct tagOBJ*">
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://yoursite.com/2017/08/03/pwnable-kr-0/images/chunk_set.png">
-<meta property="og:updated_time" content="2017-08-03T14:58:33.415Z">
+<meta property="og:updated_time" content="2017-08-04T02:20:32.413Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="pwnable_kr_0">
 <meta name="twitter:description" content="unlink12345678910111213141516171819202122232425262728293031323334353637383940414243#include &amp;lt;stdio.h&amp;gt;#include &amp;lt;stdlib.h&amp;gt;#include &amp;lt;string.h&amp;gt;typedef struct tagOBJ&amp;#123;	struct tagOBJ*">
@@ -362,8 +362,16 @@
 <p>这里有一个关键的东西就是，还是要根据具体程序的代码来选择漏洞利用方式，不同于前面<a href="/2017/08/02/pwnable_tw/" title="applestore">applestore</a>，这里的在leave 之后，程序就要退出了，没有多层的调用，所以ebp不能再次使用，无法改变变量或者栈中其他的值。</p>
 <p>但是，这是一个题目嘛，总会有解决办法的。</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div></pre></td><td class="code"><pre><div class="line">0x80485ff &lt;main+208&gt;:	mov    ecx,DWORD PTR [ebp-0x4]</div><div class="line">=&gt; 0x8048602 &lt;main+211&gt;:	leave  </div><div class="line">0x8048603 &lt;main+212&gt;:	lea    esp,[ecx-0x4]</div><div class="line">0x8048606 &lt;main+215&gt;:	ret  </div><div class="line"></div><div class="line">________stack________________</div><div class="line">gdb-peda$ tele 20</div><div class="line">0000| 0xffe69210 --&gt; 0x1</div><div class="line">0004| 0xffe69214 --&gt; 0x8643410 --&gt; 0x8643440 --&gt; 0x0</div><div class="line">0008| 0xffe69218 --&gt; 0x8643440 --&gt; 0x0</div><div class="line">0012| 0xffe6921c --&gt; 0x8643428 --&gt; 0x8643440 --&gt; 0x0</div><div class="line">0016| 0xffe69220 --&gt; 0xf77813dc --&gt; 0xf77821e0 --&gt; 0x0</div><div class="line">0020| 0xffe69224 --&gt; 0xffe69240 --&gt; 0x1</div><div class="line">0024| 0xffe69228 --&gt; 0x0</div><div class="line">0028| 0xffe6922c --&gt; 0xf75e6276 (&lt;__libc_start_main+246&gt;:	add    esp,0x10)</div><div class="line">0032| 0xffe69230 --&gt; 0x1</div><div class="line">0036| 0xffe69234 --&gt; 0xf7781000 --&gt; 0x1b2db0</div><div class="line">0040| 0xffe69238 --&gt; 0x0</div><div class="line">0044| 0xffe6923c --&gt; 0xf75e6276 (&lt;__libc_start_main+246&gt;:	add    esp,0x10)</div><div class="line">_______________________</div><div class="line">EAX: 0x0</div><div class="line">EBX: 0x0</div><div class="line">ECX: 0xffe69240 --&gt; 0x1</div><div class="line">EDX: 0x8643440 --&gt; 0x0</div><div class="line">ESI: 0x1</div><div class="line">EDI: 0xf7781000 --&gt; 0x1b2db0</div><div class="line">EBP: 0xffe69228 --&gt; 0x0</div><div class="line">ESP: 0xffe69210 --&gt; 0x1</div><div class="line">EIP: 0x8048602 (&lt;main+211&gt;:	leave)</div></pre></td></tr></table></figure>
-<p>我们查看main函数最后几行汇编代码，结合动态调试，我们发现 ecx = ebp+0x18，然后后面esp=[ecx-4]，这样我们控制ebp+0x18这里的内存就可以控制esp，从而在ret时返回到我们的shellcode上。</p>
+<p>我们查看main函数最后几行汇编代码，结合动态调试，我们发现 ecx = [ebp-0x4]，然后后面esp=[ecx-0x4]，这样我们控制ebp+0x4这里的内存就可以控制ecx的值，然后控制esp，从而在ret时返回到我们的shellcode上。</p>
 <p>playload的构造<br><img src="./images/chunk_set.png" alt="chunk"></p>
+<p>注意：</p>
+<ol>
+<li><p>unlink修改的内存是FD-&gt;bk和BK-&gt;fd，也就是FD+4和BK+0，这里有一定的偏移。</p>
+</li>
+<li><p>注意栈的方向是和正常内存不一样的，所以esp的设置应该大于返回地址。</p>
+</li>
+</ol>
+<h3 id="0x05"><a href="#0x05" class="headerlink" title="0x05"></a>0x05</h3><p><a href="https://github.com/yelleyee/pwnable_kr_exp/blob/master/unlink_exp.py" target="_blank" rel="external">exp</a></p>
 
       
     </div>
@@ -512,7 +520,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#unlink"><span class="nav-number">1.</span> <span class="nav-text">unlink</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#0x01"><span class="nav-number">1.1.</span> <span class="nav-text">0x01</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#0x02-leak"><span class="nav-number">1.2.</span> <span class="nav-text">0x02 leak</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#0x3-思路"><span class="nav-number">1.3.</span> <span class="nav-text">0x3 思路</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#0x4-exploit"><span class="nav-number">1.4.</span> <span class="nav-text">0x4 exploit</span></a></li></ol></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#unlink"><span class="nav-number">1.</span> <span class="nav-text">unlink</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#0x01"><span class="nav-number">1.1.</span> <span class="nav-text">0x01</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#0x02-leak"><span class="nav-number">1.2.</span> <span class="nav-text">0x02 leak</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#0x3-思路"><span class="nav-number">1.3.</span> <span class="nav-text">0x3 思路</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#0x4-exploit"><span class="nav-number">1.4.</span> <span class="nav-text">0x4 exploit</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#0x05"><span class="nav-number">1.5.</span> <span class="nav-text">0x05</span></a></li></ol></li></ol></div>
             
 
           </div>
