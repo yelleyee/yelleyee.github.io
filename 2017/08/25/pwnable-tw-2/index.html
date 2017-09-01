@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.2" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.2" />
+
+
+
+
+
+
+<meta name="description" content="babystack0x01刚开始这题一点思路都没有，连溢出点都没有找到。后来参考了http://pzhxbz.cn/?p=91https://github.com/dr0gba/dr0gba.github.io/blob/master/pwn/babystack.md这两个文章，后者是在github上搜索到的exp。其实还是有些摸不到头脑的，这印证了一句话“学而不思则罔，思而不学则殆”，单纯的想是">
+<meta property="og:type" content="article">
+<meta property="og:title" content="pwnable_tw_2">
+<meta property="og:url" content="http://yoursite.com/2017/08/25/pwnable-tw-2/index.html">
+<meta property="og:site_name" content="YEL&#39;s BLOG">
+<meta property="og:description" content="babystack0x01刚开始这题一点思路都没有，连溢出点都没有找到。后来参考了http://pzhxbz.cn/?p=91https://github.com/dr0gba/dr0gba.github.io/blob/master/pwn/babystack.md这两个文章，后者是在github上搜索到的exp。其实还是有些摸不到头脑的，这印证了一句话“学而不思则罔，思而不学则殆”，单纯的想是">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2017-09-01T15:04:46.174Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="pwnable_tw_2">
+<meta name="twitter:description" content="babystack0x01刚开始这题一点思路都没有，连溢出点都没有找到。后来参考了http://pzhxbz.cn/?p=91https://github.com/dr0gba/dr0gba.github.io/blob/master/pwn/babystack.md这两个文章，后者是在github上搜索到的exp。其实还是有些摸不到头脑的，这印证了一句话“学而不思则罔，思而不学则殆”，单纯的想是">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    sidebar: {"position":"right","display":"post","offset":12,"offset_float":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2017/08/25/pwnable-tw-2/"/>
+
+
+
+
+
+  <title>pwnable_tw_2 | YEL's BLOG</title>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-right page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">YEL's BLOG</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/08/25/pwnable-tw-2/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="YEL">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="YEL's BLOG">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">pwnable_tw_2</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-08-25T21:00:49+08:00">
+                2017-08-25
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="babystack"><a href="#babystack" class="headerlink" title="babystack"></a>babystack</h2><h3 id="0x01"><a href="#0x01" class="headerlink" title="0x01"></a>0x01</h3><p>刚开始这题一点思路都没有，连溢出点都没有找到。后来参考了<br><a href="http://pzhxbz.cn/?p=91" target="_blank" rel="external">http://pzhxbz.cn/?p=91</a><br><a href="https://github.com/dr0gba/dr0gba.github.io/blob/master/pwn/babystack.md" target="_blank" rel="external">https://github.com/dr0gba/dr0gba.github.io/blob/master/pwn/babystack.md</a><br>这两个文章，后者是在github上搜索到的exp。<br>其实还是有些摸不到头脑的，这印证了一句话“学而不思则罔，思而不学则殆”，单纯的想是不会有结果的，要结合实践去了解，这里得到的几个教训是：</p>
+<pre><code>1.不去动态调试，永远不知道栈上的信息有多丰富
+2.strcpy拷贝的字符串要验证长度
+3.strncmp(*str,*str,num),num=0时，这个函数返回值是0，即两个字符串相等。
+4.x64的参数调用的方式使得漏洞的利用方式需要使用one_gadgets，或者使用ROP。
+</code></pre><p>程序逻辑：</p>
+<pre><code>输入 1 ：login and logout
+输入 2 ：使用exit()退出程序
+输入 3 ：使用strcpy()向main函数的一个数组中copy
+</code></pre><h3 id="0x02-leak"><a href="#0x02-leak" class="headerlink" title="0x02 leak"></a>0x02 leak</h3><p>虽然我们可以使用登录时按一个回车键（即发送’\x0a’）来绕过登陆，但是后面的使用发现登录密码还是要知道的。那么怎么获取登陆密码呢，我对这种爆破信息不怎么敏感，所以想不到密码是固定的，然后密码的比对是这样的<br><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">readn(&amp;s, <span class="number">0x7F</span>u);</div><div class="line">v1 = <span class="built_in">strlen</span>(&amp;s);</div><div class="line"><span class="keyword">if</span> ( !<span class="built_in">strncmp</span>(&amp;s, buf_addr, v1) )</div><div class="line">&#123;</div><div class="line">  log_flag = <span class="number">1</span>;</div><div class="line">  result = <span class="built_in">puts</span>(<span class="string">"Login Success !"</span>);</div><div class="line">&#125;</div><div class="line"><span class="keyword">else</span></div></pre></td></tr></table></figure></p>
+<p>也就是说，它密码的比对，长度是由输入来决定的，所以我们可以一个一个字节来爆破密码，这样我们可以获取密码。但是这个密码在栈中的作用就相当于一个canary，除了这个我们还需要获取获取地址信息才可以完成利用。</p>
+<p>main函数栈中的变量分布<br><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">char</span> v6; <span class="comment">// [sp+0h] [bp-60h]@14</span></div><div class="line">__int64 passcode; <span class="comment">// [sp+40h] [bp-20h]@1</span></div><div class="line">__int64 v8; <span class="comment">// [sp+48h] [bp-18h]@1</span></div><div class="line"><span class="keyword">char</span> choise; <span class="comment">// [sp+50h] [bp-10h]@2</span></div></pre></td></tr></table></figure></p>
+<p>这里获取libc地址的方法是：利用3拷贝来将copy()函数中的信息拷贝到main()函数栈中，发现copy()函数栈中有一个libc(setvbuf)的地址</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">0000| 0x7fffffffe080 --&gt; 0x7ffff7ffe700 --&gt; 0x7ffff7ffa000 (jg     0x7ffff7ffa047)</div><div class="line">0008| 0x7fffffffe088 --&gt; 0x7fffffffe120 --&gt; 0x1</div><div class="line">0016| 0x7fffffffe090 --&gt; 0x7fffffffdf00 --&gt; 0x0</div><div class="line">0024| 0x7fffffffe098 --&gt; 0x7ffff7ffe4c0 --&gt; 0x7ffff7ffe420 --&gt; 0x7ffff7ff5a50 --&gt; 0x7ffff7ffe168 --&gt; 0x555555554000 (--&gt; ...)</div><div class="line">0032| 0x7fffffffe0a0 --&gt; 0x7ffff7b9ba47 (&quot;__vdso_getcpu&quot;)</div><div class="line">0040| 0x7fffffffe0a8 --&gt; 0x7fffffffe170 --&gt; 0x7fffffff0a33 --&gt; 0x0</div><div class="line">0048| 0x7fffffffe0b0 --&gt; 0x7ffff7dd4620 --&gt; 0xfbad2887</div><div class="line">0056| 0x7fffffffe0b8 --&gt; 0x7ffff7a8b947 (cmp    eax,0xffffffff)</div><div class="line">0064| 0x7fffffffe0c0 --&gt; 0x7ffff7dd4620 --&gt; 0xfbad2887</div><div class="line">0072| 0x7fffffffe0c8 --&gt; 0x7ffff7ff2700 (0x00007ffff7ff2700)</div><div class="line">0080| 0x7fffffffe0d0 --&gt; 0x555555554b70 (xor    ebp,ebp)</div><div class="line">0088| 0x7fffffffe0d8 --&gt; 0x7ffff7a88439 (&lt;_IO_file_setbuf+9&gt;:	test   rax,rax)</div><div class="line">0096| 0x7fffffffe0e0 --&gt; 0x7ffff7dd4620 --&gt; 0xfbad2887</div><div class="line">0104| 0x7fffffffe0e8 --&gt; 0x7ffff7a7ffb4 (&lt;setvbuf+324&gt;:	xor    edx,edx)</div></pre></td></tr></table></figure>
+<p>copy()函数是将 char src; // [sp+10h] [bp-80h]@1这个局部变量copy到给定的参数的位置，由于字符串没有做截止处理，所以我们可以copy很多信息到main()函数栈中的v6变量处，我们设置好copy的内容(passcod等)，恰好将这个setvbuf的地址信息copy到main函数中的&amp;choise+8这个位置，然后我们又可以通过爆破登录信息来获取这个地址信息。</p>
+<p>其实main函数的ret_addr其实也有地址信息，但是我们爆破不了，因为ebp里面的地址是6位字节的，也就是说最后有两位字节是’\x00’，密码比对使用的是strncmp()，也就是说后面的信息被截止了，我们无法获取，就算使用copy()也会引入’\x00’，使得我们想要爆破的地方信息被截止或者覆盖，所以不可行。</p>
+<h3 id="0x03-exploit"><a href="#0x03-exploit" class="headerlink" title="0x03 exploit"></a>0x03 exploit</h3><p>leak完成后，利用就很简单了，使用one_gadgets覆盖返回地址即可，构造需要copy()的内容即可</p>
+<p>payload = padding + passcode + padding + one_gadgets</p>
+<p>one_gadgets查找工具：<a href="https://github.com/david942j/one_gadget" target="_blank" rel="external">https://github.com/david942j/one_gadget</a></p>
+<p><a href="https://github.com/yelleyee/pwnable_kr_exp/blob/master/babystack_exp.py" target="_blank" rel="external">exp</a>在这里</p>
+<h2 id="Spirited-Away"><a href="#Spirited-Away" class="headerlink" title="Spirited Away"></a>Spirited Away</h2><h3 id="0x01-1"><a href="#0x01-1" class="headerlink" title="0x01"></a>0x01</h3><p>评论超过10即溢出了一位，comment&gt;100，sprintf连接后的字符串溢出两位，comment在栈上可以溢出写到name这个指针上，然后把name指针指向栈中reason中构造的fake_chunk，free后重新malloc，name指针就可以指向栈，并且可写。</p>
+<h3 id="0x02-leak-1"><a href="#0x02-leak-1" class="headerlink" title="0x02 leak"></a>0x02 leak</h3><p>栈中有很多地址信息，而且输入字符串不闭合，这样可以把栈中的地址泄露出来，可以获取栈地址、堆地址和libc地址。</p>
+<h3 id="0x03-exploit-1"><a href="#0x03-exploit-1" class="headerlink" title="0x03 exploit"></a>0x03 exploit</h3><p>这里由于栈底的reason无法溢出写，所以要构造一个fake_chunk，然后free了之后，重新malloc，将name指针指向了reason区域，这样我们就可以溢出写到ret_addr了</p>
+<p>这里构造fake_chunk的方法参考<a href="https://github.com/shellphish/how2heap" target="_blank" rel="external">how2heap</a>的house_of_sprit。</p>
+<p>另外感谢<a href="https://uaf.io" target="_blank" rel="external">uafio</a>这位前辈，发邮件去问他这题，他告诉了我这个方法~</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/08/16/pwnable-kr-2/" rel="next" title="pwnable_kr_2">
+                <i class="fa fa-chevron-left"></i> pwnable_kr_2
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/09/01/ssh/" rel="prev" title="ssh端口转发">
+                ssh端口转发 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.gif"
+               alt="YEL" />
+          <p class="site-author-name" itemprop="name">YEL</p>
+           
+              <p class="site-description motion-element" itemprop="description"></p>
+          
+        </div>
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives/">
+                <span class="site-state-item-count">7</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#babystack"><span class="nav-number">1.</span> <span class="nav-text">babystack</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#0x01"><span class="nav-number">1.1.</span> <span class="nav-text">0x01</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#0x02-leak"><span class="nav-number">1.2.</span> <span class="nav-text">0x02 leak</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#0x03-exploit"><span class="nav-number">1.3.</span> <span class="nav-text">0x03 exploit</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Spirited-Away"><span class="nav-number">2.</span> <span class="nav-text">Spirited Away</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#0x01-1"><span class="nav-number">2.1.</span> <span class="nav-text">0x01</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#0x02-leak-1"><span class="nav-number">2.2.</span> <span class="nav-text">0x02 leak</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#0x03-exploit-1"><span class="nav-number">2.3.</span> <span class="nav-text">0x03 exploit</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">YEL</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Muse
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.2"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.2"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
